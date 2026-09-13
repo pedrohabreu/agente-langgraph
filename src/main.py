@@ -10,13 +10,14 @@ from langgraph.checkpoint.memory import InMemorySaver
 class Estado(TypedDict):
     messages: Annotated[list, add_messages]
 
-memoria = InMemorySaver()
+
 
 llm = ChatOllama(
     model="llama3.2:3b",
     temperature=0
 )
 
+memoria = InMemorySaver()
 
 def responder_pergunta(estado: Estado):
     resposta = llm.invoke(estado["messages"])
