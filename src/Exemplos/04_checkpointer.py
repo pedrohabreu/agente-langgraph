@@ -67,4 +67,4 @@ while True:
     resposta = resultado["messages"][-1]
 
     print("\nAgente:")
-    print(resposta.content)
+    print(resposta.content) 

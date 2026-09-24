@@ -1,15 +1,5 @@
-from typing_extensions import TypedDict, Annotated
-
-from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
-
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage
 from langchain_ollama import ChatOllama
-
-
-class Estado(TypedDict):
-    messages: Annotated[list, add_messages]
-
 
 
 llm = ChatOllama(
@@ -18,112 +8,31 @@ llm = ChatOllama(
 )
 
 
-def entrada_usuario(state: Estado) -> Estado:
-    pergunta = input("Pergunta: ")
+def analisar_sentimento(comentario: str) -> str:
+    prompt = (
+        "Classifique o sentimento do seguinte comentário como "
+        "POSITIVO, NEGATIVO ou NEUTRO:\n"
+        f'Comentário: "{comentario}"'
+    )
 
-    if isinstance(pergunta, str) and pergunta.strip():
-        return {
-            "messages": [
-                HumanMessage(content=pergunta)
-            ]
-        }
+    resposta = llm.invoke(
+        [HumanMessage(content=prompt)]
+    )
 
-    else:
-        raise ValueError(
-            "A pergunta deve ser uma string não vazia."
-        )
-def processar_solicitacao(state: Estado) -> Estado:
-    last_message = state["messages"][-1]
+    return resposta.content.strip().upper()
 
-    if (
-        isinstance(last_message, HumanMessage)
-        and last_message.content.strip()
-    ):
-        print(
-            f"DEBUG: Processando pergunta: "
-            f"{last_message.content}"
-        )
-
-        try:
-            resposta = llm.invoke(
-                [last_message]
-            ).content
-
-            print(
-                f"DEBUG: Resposta gerada: {resposta}"
-            )
-
-            return {
-                "messages": [
-                    AIMessage(content=resposta)
-                ]
-            }
-
-        except Exception as e:
-            print(
-                f"DEBUG: Erro ao chamar o LLM: {e}"
-            )
-
-            return {
-                "messages": [
-                    AIMessage(
-                        content=f"Desculpe, ocorreu um erro: {e}"
-                    )
-                ]
-            }
-
-    else:
-        raise ValueError(
-            "A última mensagem no estado "
-            "não é uma HumanMessage válida."
-        )
-
-def saida_resposta(state: Estado) -> Estado:
-    last_message = state["messages"][-1]
-
-    if hasattr(last_message, "content"):
-        print(f"Resposta: {last_message.content}")
-    else:
-        print(f"Resposta: {last_message}")
-
-    return state
-
-grafo = StateGraph(Estado)
-
-grafo.add_node("entrada", entrada_usuario)
-grafo.add_node("processamento", processar_solicitacao)
-grafo.add_node("saida", saida_resposta)
-
-grafo.add_edge(START, "entrada")
-grafo.add_edge("entrada", "processamento")
-grafo.add_edge("processamento", "saida")
-grafo.add_edge("saida", END)
-
-agente = grafo.compile()
-
-print("Iniciando a interação...")
 
 while True:
-    try:
-        agente.invoke({"messages": []})
+    comentario = input(
+        "\nDigite um comentário ou 'sair' para encerrar: "
+    )
 
-        continuar = input(
-            "Deseja fazer outra pergunta? (sim/não): "
-        )
-
-        if continuar.lower() != "sim":
-            break
-
-    except ValueError as ve:
-        print(f"Erro de entrada: {ve}")
-
-    except KeyboardInterrupt:
-        print("\nInteração encerrada pelo usuário.")
+    if comentario.lower() == "sair":
+        print("Análise encerrada.")
         break
 
-    except Exception as e:
-        print(f"Ocorreu um erro inesperado: {e}")
-        break
+    sentimento = analisar_sentimento(comentario)
 
-print("Interação encerrada.")
-
+    print(
+        f"O sentimento do comentário é: {sentimento}"
+    )
