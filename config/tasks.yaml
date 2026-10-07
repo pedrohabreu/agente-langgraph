@@ -1,0 +1,28 @@
+triagem_task:
+  description: >
+    Receba dados do cliente, classifique tipo de problema
+    e urgência, indique agente apropriado.
+  expected_output: >
+    JSON com categoria, urgência e agente destino.
+  agent: triagem
+
+resolucao_tecnica_task:
+  description: >
+    Para chamadas do tipo software ou hardware,
+    faça diagnóstico técnico usando logs ou base de conhecimento
+    e proponha solução.
+  expected_output: >
+    Passos de resolução técnica.
+  agent: tecnico
+  context:
+    - triagem_task
+
+escalonamento_task:
+  description: >
+    Se o diagnóstico técnico não for suficiente,
+    analise o caso inteiro e decida a próxima ação.
+  expected_output: >
+    Recomendação final ou encaminhamento humano.
+  agent: escalonamento
+  context:
+    - resolucao_tecnica_task
